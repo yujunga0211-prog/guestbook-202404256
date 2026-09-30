@@ -11,41 +11,46 @@ export default async function Home() {
   const entries = await appGuestbook().listEntries();
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-10">
+    <main className="mx-auto w-full max-w-6xl px-4 py-10">
       <h1 className="text-3xl font-bold tracking-tight">방명록</h1>
-      <p className="mt-2 text-muted">로그인 없이 한마디 남겨 주세요. 비밀번호로 내 글만 고치고 지울 수 있어요.</p>
+      <p className="mt-2 text-muted">
+        로그인 없이 한마디 남겨 주세요. 비밀번호로 내 글만 고치고 지울 수 있어요.
+      </p>
 
-      <section className={`${cardClass} mt-8`}>
-        <h2 className="text-lg font-semibold">글 남기기</h2>
-        <EntryForm />
-      </section>
+      {/* 넓은 화면: 왼쪽 작성 폼(스크롤해도 고정) + 오른쪽 목록. 좁은 화면: 위아래로 쌓인다. */}
+      <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] lg:gap-8">
+        <section className={`${cardClass} lg:sticky lg:top-6 lg:self-start`}>
+          <h2 className="text-lg font-semibold">글 남기기</h2>
+          <EntryForm />
+        </section>
 
-      <section className="mt-12">
-        <h2 className="flex items-center gap-2 text-lg font-semibold">
-          남겨진 글
-          <span className="rounded-full bg-line px-2 py-0.5 text-xs font-medium text-muted tabular-nums">
-            {entries.length}
-          </span>
-        </h2>
-        {entries.length === 0 ? (
-          <p className="mt-4 rounded-2xl border border-dashed border-line px-4 py-10 text-center text-muted">
-            아직 남겨진 글이 없어요. 첫 글을 남겨 보세요!
-          </p>
-        ) : (
-          <ul className="mt-4 flex flex-col gap-3">
-            {entries.map((entry) => (
-              <EntryCard
-                key={entry.id}
-                id={entry.id}
-                authorName={entry.authorName}
-                message={entry.message}
-                createdLabel={formatSeoulDateTime(entry.createdAt)}
-                edited={entry.updatedAt !== null}
-              />
-            ))}
-          </ul>
-        )}
-      </section>
+        <section>
+          <h2 className="flex items-center gap-2 text-lg font-semibold lg:mt-6">
+            남겨진 글
+            <span className="rounded-full bg-line px-2 py-0.5 text-xs font-medium text-muted tabular-nums">
+              {entries.length}
+            </span>
+          </h2>
+          {entries.length === 0 ? (
+            <p className="mt-4 rounded-2xl border border-dashed border-line px-4 py-10 text-center text-muted">
+              아직 남겨진 글이 없어요. 첫 글을 남겨 보세요!
+            </p>
+          ) : (
+            <ul className="mt-4 flex flex-col gap-3">
+              {entries.map((entry) => (
+                <EntryCard
+                  key={entry.id}
+                  id={entry.id}
+                  authorName={entry.authorName}
+                  message={entry.message}
+                  createdLabel={formatSeoulDateTime(entry.createdAt)}
+                  edited={entry.updatedAt !== null}
+                />
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
     </main>
   );
 }

@@ -15,7 +15,7 @@ export function EntryForm() {
 
   return (
     <form key={formKey} action={formAction} className="mt-4 flex flex-col gap-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="flex flex-col gap-4">
         <Field label="이름" error={errors?.authorName}>
           <input
             name="authorName"
@@ -44,13 +44,13 @@ export function EntryForm() {
           name="message"
           defaultValue={values?.message}
           maxLength={MESSAGE_MAX}
-          rows={3}
+          rows={5}
           placeholder="따뜻한 한마디를 남겨 주세요"
           aria-invalid={errors?.message ? true : undefined}
           className={`${inputClass} resize-y`}
         />
       </Field>
-      <button type="submit" disabled={pending} className={`${primaryButtonClass} self-end`}>
+      <button type="submit" disabled={pending} className={`${primaryButtonClass} w-full`}>
         {pending ? "남기는 중…" : "남기기"}
       </button>
     </form>
