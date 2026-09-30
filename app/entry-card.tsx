@@ -3,7 +3,14 @@
 import { useActionState, useState } from "react";
 import { deleteEntryAction, updateMessageAction, type ChangeEntryState } from "./actions";
 import { MESSAGE_MAX, PASSWORD_MAX } from "@/lib/limits";
-import { errorTextClass, ghostButtonClass, inputClass, primaryButtonClass } from "./ui";
+import {
+  cardClass,
+  dangerButtonClass,
+  errorTextClass,
+  ghostButtonClass,
+  inputClass,
+  primaryButtonClass,
+} from "./ui";
 
 export type EntryCardProps = {
   id: string;
@@ -25,6 +32,9 @@ export function EntryCard({ id, authorName, message, createdLabel, edited }: Ent
   const [openedWith, setOpenedWith] = useState<ChangeEntryState>(null);
 
   const updated = updateState?.status === "ok" && updateState !== openedWith;
+  // 이번에 연 폼에서 실패했으면 입력했던 Message를 다시 채운다.
+  const failedMessage =
+    updateState?.status === "error" && updateState !== openedWith ? updateState.message : undefined;
   const visibleMode: Mode = mode === "edit" && updated ? "view" : mode;
 
   const open = (next: Mode) => {
@@ -33,7 +43,7 @@ export function EntryCard({ id, authorName, message, createdLabel, edited }: Ent
   };
 
   return (
-    <li className="rounded-2xl border border-line bg-surface p-5 shadow-sm">
+    <li className={cardClass}>
       <div className="flex items-baseline justify-between gap-3">
         <p className="font-semibold break-words">{authorName}</p>
         <p className="shrink-0 text-xs text-muted tabular-nums">
@@ -46,7 +56,7 @@ export function EntryCard({ id, authorName, message, createdLabel, edited }: Ent
         <form action={updateAction} className="mt-3 flex flex-col gap-3">
           <textarea
             name="message"
-            defaultValue={message}
+            defaultValue={failedMessage ?? message}
             maxLength={MESSAGE_MAX}
             rows={3}
             aria-label="수정할 메시지"
@@ -112,11 +122,7 @@ function PasswordRow({
         <button
           type="submit"
           disabled={pending}
-          className={
-            danger
-              ? "rounded-xl bg-red-600 px-5 py-2.5 font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
-              : primaryButtonClass
-          }
+          className={danger ? dangerButtonClass : primaryButtonClass}
         >
           {pending ? "확인 중…" : submitLabel}
         </button>

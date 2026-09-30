@@ -1,4 +1,4 @@
-// 화면 공통 스타일. 색은 globals.css의 토큰(surface, line, muted, accent)만 쓴다.
+// 화면 공통 스타일. 기본 색은 globals.css의 토큰(surface, line, muted, accent)을 쓰고, 오류·삭제만 빨강을 쓴다.
 export const cardClass = "rounded-2xl border border-line bg-surface p-5 shadow-sm sm:p-6";
 
 export const inputClass =
@@ -11,3 +11,6 @@ export const ghostButtonClass =
   "rounded-lg px-3 py-1.5 text-sm font-medium text-muted transition hover:bg-background hover:text-foreground";
 
 export const errorTextClass = "text-sm text-red-600 dark:text-red-400";
+
+export const dangerButtonClass =
+  "rounded-xl bg-red-600 px-5 py-2.5 font-semibold text-white transition hover:bg-red-700 disabled:opacity-50";

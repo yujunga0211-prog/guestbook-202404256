@@ -47,11 +47,17 @@ function validateEntry(authorName: string, message: string, password: string): E
   return Object.keys(errors).length > 0 ? errors : null;
 }
 
+// 권한 확인과 변경 사이에 다른 요청이 지웠으면 0행이 바뀐다.
+const changedOrNotFound = (rows: unknown[]): ChangeEntryResult =>
+  rows.length > 0 ? { ok: true } : { ok: false, reason: "not_found" };
+
 const toDate = (value: unknown) => (value === null ? null : new Date(value as string | Date));
 
 export function createGuestbook(sql: Sql) {
   // ADR-0002: 테이블은 첫 DB 사용 때 만든다. 인스턴스마다 한 번만 실행하고, 실패하면 다음 요청에서 다시 시도한다.
   let schemaReady: Promise<void> | undefined;
+  // CHECK의 길이는 lib/limits.ts와 같아야 한다(DDL에는 파라미터를 쓸 수 없어 숫자로 적는다).
+  // JS 검증(UTF-16 길이)이 char_length(코드 포인트)보다 엄격해서, JS를 통과한 값은 CHECK도 통과한다.
   function ensureSchema(): Promise<void> {
     schemaReady ??= (async () => {
       await sql`
@@ -103,8 +109,8 @@ export function createGuestbook(sql: Sql) {
     return { ok: true, entryId: row.id as string };
   }
 
-  // 비밀번호 확인. 없는 Entry면 "not_found", 틀리면 "wrong_password", 맞으면 null.
-  async function checkPassword(entryId: string, password: string) {
+  // 비밀번호로 권한을 확인해 실패 이유를 돌려준다. 없는 Entry면 "not_found", 틀리면 "wrong_password", 통과하면 null.
+  async function findPasswordFailure(entryId: string, password: string) {
     if (!UUID_PATTERN.test(entryId)) return "not_found" as const;
     await ensureSchema();
     const [row] = await sql`SELECT password_hash FROM entries WHERE id = ${entryId}`;
@@ -115,25 +121,24 @@ export function createGuestbook(sql: Sql) {
 
   async function updateMessage(input: UpdateMessageInput): Promise<ChangeEntryResult> {
     const message = input.message.trim();
-    const failure = await checkPassword(input.entryId, input.password);
+    const failure = await findPasswordFailure(input.entryId, input.password);
     if (failure) return { ok: false, reason: failure };
     const error = messageError(message);
     if (error) return { ok: false, reason: "invalid", errors: { message: error } };
 
-    // 확인과 수정 사이에 삭제됐으면 0행이 바뀐다.
     const rows = await sql`
       UPDATE entries SET message = ${message}, updated_at = now()
       WHERE id = ${input.entryId}
       RETURNING id
     `;
-    return rows.length > 0 ? { ok: true } : { ok: false, reason: "not_found" };
+    return changedOrNotFound(rows);
   }
 
   async function deleteEntry(input: DeleteEntryInput): Promise<ChangeEntryResult> {
-    const failure = await checkPassword(input.entryId, input.password);
+    const failure = await findPasswordFailure(input.entryId, input.password);
     if (failure) return { ok: false, reason: failure };
     const rows = await sql`DELETE FROM entries WHERE id = ${input.entryId} RETURNING id`;
-    return rows.length > 0 ? { ok: true } : { ok: false, reason: "not_found" };
+    return changedOrNotFound(rows);
   }
 
   return { listEntries, createEntry, updateMessage, deleteEntry };
